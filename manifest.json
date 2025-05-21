@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "LeetCode Challenge Blocker",
+  "version": "1.0",
+  "description": "Blocks distracting websites until you complete your daily LeetCode challenge",
+  "permissions": [
+    "storage",
+    "webRequest",
+    "tabs",
+    "identity"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
