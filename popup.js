@@ -9,21 +9,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const refreshButton = document.getElementById('refresh-button');
   const settingsButton = document.getElementById('settings-button');
   
-  // Initialize the popup UI based on authentication status
+  
   checkAuthStatus();
   
-  // Check if the user is authenticated
+  
   function checkAuthStatus() {
     chrome.storage.local.get(['isAuthenticated', 'leetCodeUsername'], (result) => {
       if (result.isAuthenticated && result.leetCodeUsername) {
-        // User is authenticated, show controls
+        
         authSection.classList.add('hidden');
         controlsSection.classList.remove('hidden');
         
-        // Update status
+        
         updateGoalStatus();
       } else {
-        // User is not authenticated, show auth section
+        
         authSection.classList.remove('hidden');
         controlsSection.classList.add('hidden');
         statusMessage.textContent = 'Please connect your LeetCode account to start tracking progress.';
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Update the goal status in the UI
+  
   function updateGoalStatus() {
     chrome.runtime.sendMessage({ action: 'checkGoalStatus' }, (response) => {
       if (response.goalMet) {
@@ -42,13 +42,13 @@ document.addEventListener('DOMContentLoaded', function() {
         statusMessage.textContent = `Progress: ${response.solved}/${response.goal} problems solved today.`;
       }
       
-      // Update progress bar
+    
       const progressPercentage = Math.min(100, (response.solved / response.goal) * 100);
       progressBar.style.width = `${progressPercentage}%`;
     });
   }
   
-  // Handle authentication
+  
   authButton.addEventListener('click', function() {
     const username = usernameInput.value.trim();
     
@@ -71,16 +71,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Handle refresh button
+  
   refreshButton.addEventListener('click', function() {
     statusMessage.textContent = 'Refreshing progress...';
     
     chrome.runtime.sendMessage({ action: 'refreshProgress' }, () => {
-      setTimeout(updateGoalStatus, 1000); // Give a moment for the background script to update
+      setTimeout(updateGoalStatus, 1000); 
     });
   });
   
-  // Handle settings button
+  
   settingsButton.addEventListener('click', function() {
     chrome.runtime.openOptionsPage();
   });

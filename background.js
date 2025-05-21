@@ -1,8 +1,6 @@
-// LeetCode API endpoint to check solved problems
+
 const LEETCODE_API_URL = 'https://leetcode.com/api/problems/all/';
 const LEETCODE_GRAPHQL_URL = 'https://leetcode.com/graphql';
-
-// Default blocked sites
 const DEFAULT_BLOCKED_SITES = [
   'youtube.com',
   'facebook.com',
@@ -11,16 +9,14 @@ const DEFAULT_BLOCKED_SITES = [
   'reddit.com'
 ];
 
-// Initialize extension data
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['blockedSites', 'dailyGoal', 'isAuthenticated', 'leetCodeUsername'], (result) => {
-    // Set default values if not present
     if (!result.blockedSites) {
       chrome.storage.local.set({ blockedSites: DEFAULT_BLOCKED_SITES });
     }
     
     if (!result.dailyGoal) {
-      chrome.storage.local.set({ dailyGoal: 1 }); // Default: solve 1 problem per day
+      chrome.storage.local.set({ dailyGoal: 1 }); 
     }
     
     if (result.isAuthenticated === undefined) {
@@ -31,12 +27,10 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.storage.local.set({ leetCodeUsername: '' });
     }
     
-    // Initialize today's problem count
     resetDailyCountIfNeeded();
   });
 });
 
-// Reset the daily count at the start of a new day
 function resetDailyCountIfNeeded() {
   chrome.storage.local.get(['lastResetDate', 'problemsSolvedToday'], (result) => {
     const now = new Date();
@@ -50,30 +44,25 @@ function resetDailyCountIfNeeded() {
     }
   });
 }
-
-// Check if the site should be blocked
 function shouldBlockSite(url) {
   return new Promise((resolve) => {
     chrome.storage.local.get(['blockedSites', 'problemsSolvedToday', 'dailyGoal', 'isAuthenticated'], (result) => {
       if (!result.isAuthenticated) {
-        resolve(false); // Don't block if not authenticated
+        resolve(false);
         return;
       }
       
-      // If daily goal is met, don't block
       if (result.problemsSolvedToday >= result.dailyGoal) {
         resolve(false);
         return;
       }
       
-      // Check if current URL contains any blocked site
       const shouldBlock = result.blockedSites.some(site => url.includes(site));
       resolve(shouldBlock);
     });
   });
 }
 
-// Handle tab updates
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'loading' && tab.url) {
     shouldBlockSite(tab.url).then(block => {
@@ -84,10 +73,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-// Check LeetCode problems solved
 async function checkLeetCodeProgress(username) {
   try {
-    // First, attempt to use the GraphQL API to get user profile info
     const userProfileQuery = {
       query: `
         query userProfile($username: String!) {
@@ -116,7 +103,6 @@ async function checkLeetCodeProgress(username) {
     
     const profileData = await profileResponse.json();
     
-    // Fallback to the older API if GraphQL doesn't work
     if (!profileData.data?.matchedUser) {
       const response = await fetch(`${LEETCODE_API_URL}?username=${username}`);
       if (!response.ok) {
@@ -133,7 +119,6 @@ async function checkLeetCodeProgress(username) {
   }
 }
 
-// Refresh LeetCode progress periodically
 function updateLeetCodeProgress() {
   chrome.storage.local.get(['leetCodeUsername', 'lastKnownSolvedCount'], async (result) => {
     if (!result.leetCodeUsername) return;
@@ -141,17 +126,14 @@ function updateLeetCodeProgress() {
     try {
       const currentSolvedCount = await checkLeetCodeProgress(result.leetCodeUsername);
       
-      // If this is the first check, just store the count
       if (result.lastKnownSolvedCount === undefined) {
         chrome.storage.local.set({ lastKnownSolvedCount: currentSolvedCount });
         return;
       }
       
-      // If more problems have been solved since last check
       if (currentSolvedCount > result.lastKnownSolvedCount) {
         const newProblemsSolved = currentSolvedCount - result.lastKnownSolvedCount;
         
-        // Update the count of problems solved today
         chrome.storage.local.get(['problemsSolvedToday'], (data) => {
           chrome.storage.local.set({ 
             lastKnownSolvedCount: currentSolvedCount,
@@ -159,7 +141,7 @@ function updateLeetCodeProgress() {
           });
         });
       } else {
-        // Just update the last known count
+
         chrome.storage.local.set({ lastKnownSolvedCount: currentSolvedCount });
       }
     } catch (error) {
@@ -168,13 +150,9 @@ function updateLeetCodeProgress() {
   });
 }
 
-// Check LeetCode progress every 5 minutes
 setInterval(updateLeetCodeProgress, 5 * 60 * 1000);
 
-// Also check when the extension starts
 updateLeetCodeProgress();
-
-// Reset daily count check at midnight
 function scheduleNextDayReset() {
   const now = new Date();
   const tomorrow = new Date(now);
@@ -185,26 +163,22 @@ function scheduleNextDayReset() {
   
   setTimeout(() => {
     resetDailyCountIfNeeded();
-    scheduleNextDayReset(); // Schedule the next day's reset
+    scheduleNextDayReset();
   }, timeUntilMidnight);
 }
 
-// Start the daily reset schedule
 scheduleNextDayReset();
 
-// Handle authentication with LeetCode
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'authenticate') {
-    // Store the username and mark as authenticated
     chrome.storage.local.set({ 
       leetCodeUsername: message.username,
       isAuthenticated: true
     }, () => {
-      // Initialize the last known solved count
       updateLeetCodeProgress();
       sendResponse({ success: true });
     });
-    return true; // Indicate we'll send a response asynchronously
+    return true;
   }
   
   if (message.action === 'checkGoalStatus') {
@@ -215,7 +189,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         goal: result.dailyGoal
       });
     });
-    return true; // Indicate we'll send a response asynchronously
+    return true; 
   }
   
   if (message.action === 'refreshProgress') {
